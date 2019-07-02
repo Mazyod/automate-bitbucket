@@ -24,6 +24,7 @@ comment_events = [
 def webhook():
 
     event = request.headers.get("X-Event-Key")
+    print(f"Process event: {event}")
     payload = request.get_json()
     response = Response(status=200)
 
@@ -32,8 +33,8 @@ def webhook():
 
     if event in comment_events:
         handle_comment(payload)
-    else:
-        process_tasks(payload)
+
+    process_tasks(payload)
 
     return response
 
@@ -61,10 +62,14 @@ def tasks_file(new_value=None):
 def process_tasks(payload):
     pr = payload.get("pullrequest")
     if not isinstance(pr, dict):
+        print(f"No PR found: {payload}")
         return
 
     merge_link = pr["links"]["merge"]["href"]
     approve_link = pr["links"]["approve"]["href"]
+
+    print(f"merge: {merge_link}")
+    print(f"approve: {approve_link}")
 
     config = config_file()
     auth = (config["creds"]["user"], config["creds"]["pass"])
@@ -79,9 +84,11 @@ def process_tasks(payload):
 
     if approve_link in tasks["approve"]:
         response = requests.post(approve_link, auth=auth)
+        print(response)
     if merge_link in tasks["merge"]:
         response = requests.post(merge_link, auth=auth)
         clean_link(response, "merge", merge_link)
+        print(response)
 
 
 def handle_comment(payload):
