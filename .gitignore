@@ -1,6 +1,9 @@
 config.json
 tasks.json
 
+# need to obscure test data first
+tests/data/
+
 nohup.out
 tmp/
 .idea/
