@@ -63,8 +63,8 @@ def process_tasks(payload):
     if not isinstance(pr, dict):
         return
 
-    merge_link = pr["links"]["merge"]
-    approve_link = pr["links"]["approve"]
+    merge_link = pr["links"]["merge"]["href"]
+    approve_link = pr["links"]["approve"]["href"]
 
     config = config_file()
     auth = (config["creds"]["user"], config["creds"]["pass"])
@@ -98,10 +98,10 @@ def handle_comment(payload):
     pr_links = payload["pullrequest"]["links"]
 
     if text == "auto-merge please":
-        merge = pr_links["merge"]
+        merge = pr_links["merge"]["href"]
         tasks["merge"].append(merge)
     elif text == "auto-approve please":
-        approve = pr_links["approve"]
+        approve = pr_links["approve"]["href"]
         tasks["approve"].append(approve)
     else:
         return
