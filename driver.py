@@ -64,16 +64,6 @@ def tasks_file(new_value=None):
 
 
 def process_tasks(payload):
-    pr = payload.get("pullrequest")
-    if not isinstance(pr, dict):
-        logging.debug(f"No PR found: {payload}")
-        return
-
-    merge_link = pr["links"]["merge"]["href"]
-    approve_link = pr["links"]["approve"]["href"]
-
-    logging.debug(f"merge: {merge_link}")
-    logging.debug(f"approve: {approve_link}")
 
     config = config_file()
     auth = (config["creds"]["user"], config["creds"]["pass"])
@@ -86,10 +76,11 @@ def process_tasks(payload):
         tasks[key].remove(link)
         tasks_file(tasks)
 
-    if approve_link in tasks["approve"]:
+    for approve_link in tasks["approve"]:
         response = requests.post(approve_link, auth=auth)
         logging.debug(f"Response: {response}")
-    if merge_link in tasks["merge"]:
+
+    for merge_link in tasks["merge"]:
         response = requests.post(merge_link, auth=auth)
         clean_link(response, "merge", merge_link)
         logging.debug(f"Response: {response}")
