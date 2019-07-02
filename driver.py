@@ -2,6 +2,8 @@ import os
 import json
 import requests
 import logging
+from threading import Thread
+from queue import Queue
 from flask import Flask, Response, request
 
 
@@ -12,6 +14,8 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
 app.config.from_object(__name__)
 
+
+task_queue = Queue()
 
 tasks_file_template = {
     "approve": [],
@@ -38,7 +42,7 @@ def webhook():
     if event in comment_events:
         handle_comment(payload)
 
-    process_tasks(payload)
+    task_queue.put_nowait(payload)
 
     return response
 
@@ -111,7 +115,21 @@ def handle_comment(payload):
     tasks_file(tasks)
 
 
+def tasks_worker():
+    while True:
+        try:
+            payload = task_queue.get()
+        except:
+            break
+        process_tasks(payload)
+
+
 def main():
+
+    tasks_thread = Thread(target=tasks_worker)
+    tasks_thread.daemon = True
+    tasks_thread.start()
+
     app.run(host='0.0.0.0', port=8448, debug=True)
 
 
