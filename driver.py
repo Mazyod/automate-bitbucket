@@ -1,7 +1,11 @@
 import os
 import json
 import requests
+import logging
 from flask import Flask, Response, request
+
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 """ app creation """
@@ -24,7 +28,7 @@ comment_events = [
 def webhook():
 
     event = request.headers.get("X-Event-Key")
-    print(f"Process event: {event}")
+    logging.debug(f"Process event: {event}")
     payload = request.get_json()
     response = Response(status=200)
 
@@ -62,14 +66,14 @@ def tasks_file(new_value=None):
 def process_tasks(payload):
     pr = payload.get("pullrequest")
     if not isinstance(pr, dict):
-        print(f"No PR found: {payload}")
+        logging.debug(f"No PR found: {payload}")
         return
 
     merge_link = pr["links"]["merge"]["href"]
     approve_link = pr["links"]["approve"]["href"]
 
-    print(f"merge: {merge_link}")
-    print(f"approve: {approve_link}")
+    logging.debug(f"merge: {merge_link}")
+    logging.debug(f"approve: {approve_link}")
 
     config = config_file()
     auth = (config["creds"]["user"], config["creds"]["pass"])
@@ -84,11 +88,11 @@ def process_tasks(payload):
 
     if approve_link in tasks["approve"]:
         response = requests.post(approve_link, auth=auth)
-        print(response)
+        logging.debug(f"Response: {response}")
     if merge_link in tasks["merge"]:
         response = requests.post(merge_link, auth=auth)
         clean_link(response, "merge", merge_link)
-        print(response)
+        logging.debug(f"Response: {response}")
 
 
 def handle_comment(payload):
@@ -117,7 +121,7 @@ def handle_comment(payload):
 
 
 def main():
-    app.run(host='0.0.0.0', port=8448, debug=False)
+    app.run(host='0.0.0.0', port=8448, debug=True)
 
 
 if __name__ == '__main__':
