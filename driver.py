@@ -70,7 +70,7 @@ def tasks_file(new_value=None):
 def process_tasks(payload):
 
     config = config_file()
-    auth = (config["creds"]["user"], config["creds"]["pass"])
+    creds = config["creds"]
     tasks = tasks_file()
 
     def clean_link(response, key, link):
@@ -80,12 +80,16 @@ def process_tasks(payload):
         tasks[key].remove(link)
         tasks_file(tasks)
 
-    for approve_link in tasks["approve"]:
-        response = requests.post(approve_link, auth=auth)
+    for approve_task in tasks["approve"]:
+        auth = creds[approve_task[0]]
+        approve_link = approve_task[1]
+        response = requests.post(approve_link, auth=(auth["user"], auth["pass"]))
         logging.debug(f"Response: {response}")
 
-    for merge_link in tasks["merge"]:
-        response = requests.post(merge_link, auth=auth)
+    for merge_task in tasks["merge"]:
+        auth = creds[merge_task[0]]
+        merge_link = merge_task[1]
+        response = requests.post(merge_link, auth=(auth["user"], auth["pass"]))
         clean_link(response, "merge", merge_link)
         logging.debug(f"Response: {response}")
 
@@ -96,7 +100,7 @@ def handle_comment(payload):
     comment = payload["comment"]
     user = comment["user"]["account_id"]
 
-    if user not in config["users"]:
+    if user not in config["creds"].keys():
         return
 
     tasks = tasks_file()
@@ -105,10 +109,10 @@ def handle_comment(payload):
 
     if text == "auto-merge please":
         merge = pr_links["merge"]["href"]
-        tasks["merge"].append(merge)
+        tasks["merge"].append([user, merge])
     elif text == "auto-approve please":
         approve = pr_links["approve"]["href"]
-        tasks["approve"].append(approve)
+        tasks["approve"].append([user, approve])
     else:
         return
 
