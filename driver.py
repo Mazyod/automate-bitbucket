@@ -90,7 +90,7 @@ def process_tasks(payload):
         auth = creds[merge_task[0]]
         merge_link = merge_task[1]
         response = requests.post(merge_link, auth=(auth["user"], auth["pass"]))
-        clean_link(response, "merge", merge_link)
+        clean_link(response, "merge", merge_task)
         logging.debug(f"Response: {response}")
 
 
