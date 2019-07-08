@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import requests
 import logging
@@ -93,6 +94,16 @@ def process_tasks(payload):
         clean_link(response, "merge", merge_task)
         logging.debug(f"Response: {response}")
 
+    if "admin" in tasks:
+        uuid = tasks["admin"]
+        maz = creds["557058:d04761dc-a1ab-43d5-8456-fbaf8da7d6d1"]
+        auth = (maz["user"], maz["pass"])
+        logging.debug(f"Make admin: {uuid}")
+
+        make_icma_admin(uuid, auth)
+        del tasks["admin"]
+        tasks_file(tasks)
+
 
 def handle_comment(payload):
 
@@ -113,10 +124,35 @@ def handle_comment(payload):
     elif text == "auto-approve please":
         approve = pr_links["approve"]["href"]
         tasks["approve"].append([user, approve])
+    elif text == "I'm on call please":
+        uuid = comment["user"]["uuid"]
+        tasks["admin"] = uuid
     else:
         return
 
     tasks_file(tasks)
+
+
+def make_icma_admin(user_uuid, auth):
+    # make sure to update "push" first
+    rules = [
+        "5799241", # develop: push
+        "5818583", # master: push
+        "6143297", # master: merge
+        "5818598", # hotfix/*: push
+        "6143288", # hotfix/*: merge
+        "5799249", # release/*: push
+        "6143300", # release/*: merge
+    ]
+
+    for rule in rules:
+        logging.debug(f"Updating rule: {rule}")
+        response = requests.put((
+            "https://api.bitbucket.org/2.0/repositories/careemteam/icma/"
+            f"branch-restrictions/{rule}"),
+            auth=auth,
+            json={"users": [{"uuid": user_uuid}]})
+        logging.debug(f"Response: {response}")
 
 
 def tasks_worker():
