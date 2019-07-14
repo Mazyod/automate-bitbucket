@@ -112,16 +112,16 @@ def handle_comment(payload):
     user = comment["user"]["account_id"]
 
     if user not in config["creds"].keys():
-        return
+        user = None
 
     tasks = tasks_file()
     text = comment["content"]["raw"]
     pr_links = payload["pullrequest"]["links"]
 
-    if text == "auto-merge please":
+    if user and text == "auto-merge please":
         merge = pr_links["merge"]["href"]
         tasks["merge"].append([user, merge])
-    elif text == "auto-approve please":
+    elif user and text == "auto-approve please":
         approve = pr_links["approve"]["href"]
         tasks["approve"].append([user, approve])
     elif text == "I'm on call please":
