@@ -124,7 +124,7 @@ def handle_comment(payload):
     elif user and text == "auto-approve please":
         approve = pr_links["approve"]["href"]
         tasks["approve"].append([user, approve])
-    elif text == "I'm on call please":
+    elif text == "I am on call please":
         uuid = comment["user"]["uuid"]
         tasks["admin"] = uuid
     else:
